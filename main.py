@@ -153,7 +153,7 @@ async def process_deposit_amount(message: types.Message, state: FSMContext):
 
     amount = int(amount_text)
 
-    if amount < 500 or amount > 100000:
+    if amount < 200 or amount > 100000:
         await message.answer("⚠️ Сумма пополнения должна быть от 500 до 100000 KGS (СОМ). Попробуйте снова:")
         return
 
