@@ -47,6 +47,7 @@ class DepositState(StatesGroup):
 
 class withdraw_opt(StatesGroup):
     withdraw_option = State()
+    sumofWith = State() 
     phone_num = State()
     xid = State()
     
@@ -63,8 +64,8 @@ async def handle_main_menu(message: Message, state: FSMContext):
         "\n"
         "📤 Пополнение 0%\n"
         "📤 Вывод 0%\n"
-        "👨‍💻 Работаем 24/7\n"
-        "✉️ Наш Канал: @KgRoyal_bot\n"
+        "👨‍💻 Работаем 24/7\n"    
+        "✉️ Наш Канал: @royallkg\n"
                         "\n"
                         "💵 Ваши транзакции защищены Финансовой службой\nСлужба Поддержки @@friday1337")
     await message.reply(text, reply_markup=main_keyboard)
@@ -139,7 +140,7 @@ async def process_1xbet_id(message: Message, state: FSMContext):
 
     # Запрос суммы пополнения
     await message.answer("Введите сумму пополнения KGS (СОМ):\n"
-                         "Минимум : 500\n"
+                         "Минимум : 200\n"
                          "Максимум : 100000")
     await state.set_state(DepositState.waiting_for_deposit_amount)
 
@@ -154,10 +155,10 @@ async def process_deposit_amount(message: types.Message, state: FSMContext):
     amount = int(amount_text)
 
     if amount < 200 or amount > 100000:
-        await message.answer("⚠️ Сумма пополнения должна быть от 500 до 100000 KGS (СОМ). Попробуйте снова:")
+        await message.answer("⚠️ Сумма пополнения должна быть от 200 до 100000 KGS (СОМ). Попробуйте снова:")
         return
 
-    await state.update_data(amount=amount)
+    await state.update_data(amount=amount)  
 
     data = await state.get_data()
     user_id = data.get("user_id")
@@ -219,7 +220,31 @@ async def withdraw_options(call : CallbackQuery, state: FSMContext):
     elif call.data == "odengi":
         await state.update_data(withdraw_option = "О!Деньги")
         await state.set_state(withdraw_opt.phone_num)
-    await call.message.answer("Введите номер телефона для вывода средств или qr-код",reply_markup=num_request)
+    await call.message.answer("Введите сумму пополнения KGS (СОМ):\n"
+                         "Минимум : 200\n"
+                         "Максимум : 100000")
+    await state.set_state(withdraw_opt.sumofWith)
+
+@dp.message(withdraw_opt.sumofWith)
+async def WaitForSum(message: Message, state: FSMContext):
+    amount_text = message.text.strip()
+
+    if not amount_text.isdigit():
+        await message.answer("❌ Сумма должна быть числом. Попробуйте снова:")
+        return
+
+    amount = int(amount_text)
+
+    if amount < 200 or amount > 100000:
+        await message.answer("⚠️ Сумма пополнения должна быть от 200 до 100000 KGS (СОМ). Попробуйте снова:")
+        return
+    await state.set_state(withdraw_opt.phone_num)
+    await state.update_data(amount=amount)  
+    await message.answer("Введите номер телефона для вывода средств или qr-код",reply_markup=num_request)
+    
+
+
+
 
 @dp.message(withdraw_opt.phone_num, F.contact)
 async def WaitForNumOrContact(message: Message, state: FSMContext):
@@ -290,6 +315,7 @@ async def forwardOperation(call : CallbackQuery,state: FSMContext):
     if type(number) is dict:
         await bot.send_photo(photo=number_fin,chat_id=group_id,caption=f"""✅Ваша заявка принята на проверку!
 Банк - {data["withdraw_option"]}
+Сумма - {data["amount"]}
 🆔ID 1XBET: {data["xid"]}
 Имя: {user_name}
 
@@ -299,6 +325,7 @@ async def forwardOperation(call : CallbackQuery,state: FSMContext):
     """)
         await bot.send_photo(photo=number_fin,chat_id=call.message.chat.id,caption=f"""✅Ваша заявка принята на проверку!
 Банк - {data["withdraw_option"]}
+Сумма - {data["amount"]}
 🆔ID 1XBET: {data["xid"]}
 Имя: {user_name}
 
@@ -310,6 +337,7 @@ async def forwardOperation(call : CallbackQuery,state: FSMContext):
         await bot.send_message(chat_id=group_id, text=f"""✅Ваша заявка принята на проверку!
 Банк - {data["withdraw_option"]}
 Номер - {data['number']}
+Сумма - {data["amount"]}
 🆔ID 1XBET: {data["xid"]}
 Имя: {user_name}
 
@@ -320,6 +348,7 @@ async def forwardOperation(call : CallbackQuery,state: FSMContext):
         await bot.send_message(chat_id=call.message.chat.id, text=f"""✅Ваша заявка принята на проверку!
 Банк - {data["withdraw_option"]}
 Номер - {data['number']}
+Сумма - {data["amount"]}
 🆔ID 1XBET: {data["xid"]}
 Имя: {user_name}
 
