@@ -10,7 +10,7 @@ from aiogram.exceptions import TelegramForbiddenError
 from aiogram.fsm.state import StatesGroup , State
 import os
 from dotenv import load_dotenv
-from buttons import main_keyboard,bookmaker_keyboard,withdrawal_keyboard,main_kb,num_request, keyboard
+from buttons import main_keyboard,bookmaker_keyboard,withdrawal_keyboard,main_kb,num_request, keyboard ,paykeyboard
 
 load_dotenv(".env")
 
@@ -24,6 +24,7 @@ dp = Dispatcher()
 onex_photo = "AgACAgIAAxkBAAMKaDc4sUpQMcyp1MfcsE6e2PviwV8AAovyMRttGcBJchrr5PFiTYwBAAMCAAN5AAM2BA"
 xIdPhoto = "AgACAgIAAxkBAAMIaDc4qCRsHHq7UchE6-LhTYXI7foAAoryMRttGcBJC8MuYtPctKoBAAMCAAN5AAM2BA"
 ucanchangeid = "AgACAgIAAxkBAAMIaDc4qCRsHHq7UchE6-LhTYXI7foAAoryMRttGcBJC8MuYtPctKoBAAMCAAN5AAM2BA"
+instruc = "AgACAgIAAxkBAAICD2g3ge4eWvZ2KqBfiA8JgWUAAbBw5QACifQxG20ZwEnZxKefB21ijwEAAwIAA3kAAzYE"
 
 @dp.message(Command("photos"))
 async def get_photos(message: Message):
@@ -43,12 +44,14 @@ class DepositState(StatesGroup):
     in_out = State()
     waiting_for_1xbet_id = State()
     waiting_for_deposit_amount = State()
+    bank = State()
     waiting_for_payment_proof = State()
 
 class withdraw_opt(StatesGroup):
     withdraw_option = State()
     sumofWith = State() 
     phone_num = State()
+    code = State()
     xid = State()
     
 
@@ -67,7 +70,7 @@ async def handle_main_menu(message: Message, state: FSMContext):
         "👨‍💻 Работаем 24/7\n"    
         "✉️ Наш Канал: @royallkg\n"
                         "\n"
-                        "💵 Ваши транзакции защищены Финансовой службой\nСлужба Поддержки @@friday1337")
+                        "💵 Ваши транзакции защищены Финансовой службой\nСлужба Поддержки @friday1337")
     await message.reply(text, reply_markup=main_keyboard)
     await message.answer("Выберите действие:", reply_markup=main_kb)
 
@@ -163,31 +166,95 @@ async def process_deposit_amount(message: types.Message, state: FSMContext):
     data = await state.get_data()
     user_id = data.get("user_id")
 
-    await message.answer(
-        f"✅ Ваш ID: {user_id}\n"
-        f"💵 Сумма пополнения: {amount} СОМ\n\n"
-        f"📨 Переведите указанную сумму на следующие реквизиты по номеру телефона:\n"
-        f"<b>MBank: <code>0709679545</code>(Нурсултан К.)</b>\n\n"
-        f"<b>Optima: <code>0709679545</code>(Нурсултан К.)</b>\n\n"
-        f"<b>Bakai: <code>0709679545</code>(Нурсултан К.)</b>\n\n"
-        f"<b>О!Деньги: <code>0709679545</code>(Нурсултан К.)</b>\n\n"
-        f"📷 После оплаты, пожалуйста, отправьте чек (фото/скрин):",
-        parse_mode="HTML"
-    )
+    await message.answer("Через какой банк вам удобно?",reply_markup=paykeyboard)
 
-    await state.set_state(DepositState.waiting_for_payment_proof)
 
+    await state.set_state(DepositState.bank)
+
+
+@dp.callback_query(F.data.in_(["mbankpay", "optimapay", "bakaipay", "odengipay"]), StateFilter(DepositState.bank))
+async def withdraw_options(call : CallbackQuery, state: FSMContext):
+    if call.data == "mbankpay":
+        await state.set_state(DepositState.waiting_for_payment_proof)
+        await state.update_data(bank = "Мбанк")
+        await call.message.answer("""
+⚠️ Пополнение от 3х лиц запрещено, используйте только свой кошелек
+-----------------------------------------------------
+❗️Терминал, единицы пополнение строго запрещено, вы потеряете деньги если пополните с терминала
+
+Способ оплаты: Мбанк
+
+Реквизиты: <code>0709679545</code>(Нурсултан К.
+
+
+Сумма и реквизит копируются при касании
+
+-----------------------------------------------------
+
+ℹ️  Оплатите и отправьте скриншот чека в течении 5 минут, чек должен быть в формате картинки 📎)""",parse_mode="HTML")
+    elif call.data == "optimapay":
+        await state.set_state(DepositState.waiting_for_payment_proof)
+        await state.update_data(bank = "Оптима")
+        await call.message.answer("""
+-----------------------------------------------------
+❗️Терминал, единицы пополнение строго запрещено, вы потеряете деньги если пополните с терминала
+
+Способ оплаты: Оптима
+
+Реквизиты: <code>0709679545</code>(Нурсултан К.
+
+
+Сумма и реквизит копируются при касании
+
+-----------------------------------------------------
+
+ℹ️  Оплатите и отправьте скриншот чека в течении 5 минут, чек должен быть в формате картинки 📎""",parse_mode="HTML")
+    elif call.data == "bakaipay":
+        await state.set_state(DepositState.waiting_for_payment_proof)
+        await state.update_data(bank = "Бакай")
+        await call.message.answer("""
+-----------------------------------------------------
+❗️Терминал, единицы пополнение строго запрещено, вы потеряете деньги если пополните с терминала
+
+Способ оплаты: Бакай
+
+Реквизиты: <code>0709679545</code>(Нурсултан К.)
+
+Сумма и реквизит копируются при касании
+
+-----------------------------------------------------
+
+ℹ️  Оплатите и отправьте скриншот чека в течении 5 минут, чек должен быть в формате картинки 📎""",parse_mode="HTML")
+    elif call.data == "odengipay":
+        await state.update_data(bank = "О!Деньги")
+        await state.set_state(DepositState.waiting_for_payment_proof)
+        await call.message.answer("""О!Деньги: 0709679545(Нурсултан К.)
+-----------------------------------------------------
+❗️Терминал, единицы пополнение строго запрещено, вы потеряете деньги если пополните с терминала
+
+Способ оплаты: О!Деньги
+
+Реквизиты: <code>0709679545</code>(Нурсултан К.)
+
+
+Сумма и реквизит копируются при касании
+
+-----------------------------------------------------
+
+ℹ️  Оплатите и отправьте скриншот чека в течении 5 минут, чек должен быть в формате картинки 📎""",parse_mode="HTML")
 
 @dp.message(DepositState.waiting_for_payment_proof, F.photo)
 async def payment_proof(message : Message, state: FSMContext):
     user_name = message.from_user.first_name
+    us = message.from_user.username
     if user_name is None:
         user_name = message.from_user.username
     photo_id = message.photo[-1].file_id
     data = await state.get_data()
-    await bot.send_photo(chat_id=group_id, photo=photo_id, caption=f"АЙДИ - {data["user_id"]}\n{data["in_out"]}")
+    await bot.send_photo(chat_id=group_id, photo=photo_id, caption=f"АЙДИ - {data["user_id"]}\n{data["in_out"]}\n{data["bank"]}\n\n@{us}")
     await message.answer(f"""✅Ваша заявка принята на проверку!
 🆔ID 1XBET: {data["onexid"]}
+Банк - {data["bank"]}
 💵Сумма: {data["amount"]}
 Имя: {user_name}
 
@@ -197,6 +264,10 @@ async def payment_proof(message : Message, state: FSMContext):
 
 Служба Поддержки - @KgRoyal_bot
 
+
+
+
+/start - начать с начала 
 """)
     await state.clear()
 
@@ -221,7 +292,7 @@ async def withdraw_options(call : CallbackQuery, state: FSMContext):
         await state.update_data(withdraw_option = "О!Деньги")
         await state.set_state(withdraw_opt.phone_num)
     await call.message.answer("Введите сумму пополнения KGS (СОМ):\n"
-                         "Минимум : 200\n"
+                         "Минимум : 150\n"
                          "Максимум : 100000")
     await state.set_state(withdraw_opt.sumofWith)
 
@@ -235,8 +306,8 @@ async def WaitForSum(message: Message, state: FSMContext):
 
     amount = int(amount_text)
 
-    if amount < 200 or amount > 100000:
-        await message.answer("⚠️ Сумма пополнения должна быть от 200 до 100000 KGS (СОМ). Попробуйте снова:")
+    if amount < 150 or amount > 100000:
+        await message.answer("⚠️ Сумма пополнения должна быть от 150 до 100000 KGS (СОМ). Попробуйте снова:")
         return
     await state.set_state(withdraw_opt.phone_num)
     await state.update_data(amount=amount)  
@@ -283,8 +354,26 @@ async def WaitForNumOrPhoto(message: Message, state: FSMContext):
 @dp.message(withdraw_opt.xid)
 async def how_to_withdraw(message: Message, state: FSMContext):
     await state.update_data(xid = message.text)
-    await message.answer("Вы правильно ввели ? ",reply_markup=keyboard)
+    await state.set_state(withdraw_opt.code)
+    await message.answer_photo(instruc,caption="""Введите код
+                               
+Как получить код:
 
+1. Заходим на сайт букмекера
+2. Вывести со счета
+3. Выбираем Mobcash
+4. Пишем сумму
+5. Касса: 1
+
+Дальше делаем все по инструкции после получения кода введите его здесь.
+Введите код от вывода (1XBet)
+""")
+
+
+@dp.message(withdraw_opt.code)
+async def how_to_code(message: Message, state: FSMContext):
+    await state.update_data(code = message.text)
+    await message.answer("Вы правильно ввели ? ",reply_markup=keyboard)
 
 
 
@@ -303,6 +392,7 @@ async def cancelOperation(call : CallbackQuery,state: FSMContext):
 @dp.callback_query(lambda call: call.data=="send")
 async def forwardOperation(call : CallbackQuery,state: FSMContext):
     user_name = call.from_user.first_name
+    us = call.from_user.username
     if user_name is None:
         user_name = call.from_user.username
     await state.update_data(confirm="yes")
@@ -317,9 +407,11 @@ async def forwardOperation(call : CallbackQuery,state: FSMContext):
 Банк - {data["withdraw_option"]}
 Сумма - {data["amount"]}
 🆔ID 1XBET: {data["xid"]}
+Code - {data["code"]}
 Имя: {user_name}
+пользователь - @{us}
 
-Служба Поддержки - @KgRoyal_bot
+Служба Поддержки - @friday1337
 💰Комиссия: 0%
 Пожалуйста подождите!
     """)
@@ -329,9 +421,13 @@ async def forwardOperation(call : CallbackQuery,state: FSMContext):
 🆔ID 1XBET: {data["xid"]}
 Имя: {user_name}
 
-Служба Поддержки - @KgRoyal_bot
+Служба Поддержки - @friday1337
 💰Комиссия: 0%
 Пожалуйста подождите!
+
+
+
+/start - начать с начала 
     """)
     else:
         await bot.send_message(chat_id=group_id, text=f"""✅Ваша заявка принята на проверку!
@@ -339,9 +435,11 @@ async def forwardOperation(call : CallbackQuery,state: FSMContext):
 Номер - {data['number']}
 Сумма - {data["amount"]}
 🆔ID 1XBET: {data["xid"]}
+Code - {data["code"]}
 Имя: {user_name}
+пользователь - @{us}
 
-Служба Поддержки - @KgRoyal_bot
+Служба Поддержки - @friday1337
 💰Комиссия: 0%
 Пожалуйста подождите!
     """)
@@ -352,9 +450,13 @@ async def forwardOperation(call : CallbackQuery,state: FSMContext):
 🆔ID 1XBET: {data["xid"]}
 Имя: {user_name}
 
-Служба Поддержки - @KgRoyal_bot
+Служба Поддержки - @friday1337
 💰Комиссия: 0%
 Пожалуйста подождите!
+
+
+
+/start - начать с начала 
     """)
         
         

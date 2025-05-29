@@ -36,6 +36,20 @@ withdrawal_keyboard = InlineKeyboardMarkup(
     resize_keyboard=True
 )
 
+paykeyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Мбанк", callback_data="mbankpay"),
+            InlineKeyboardButton(text="Оптима", callback_data="optimapay")
+        ],
+        [
+            InlineKeyboardButton(text="Бакай", callback_data="bakaipay"),
+            InlineKeyboardButton(text="О!деньги", callback_data="odengipay")
+        ]
+    ],
+    resize_keyboard=True
+)
+
 # Inline-клавиатура под сообщением
 main_kb = InlineKeyboardMarkup(
     inline_keyboard=[
