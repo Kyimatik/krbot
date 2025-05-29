@@ -143,7 +143,7 @@ async def process_1xbet_id(message: Message, state: FSMContext):
 
     # Запрос суммы пополнения
     await message.answer("Введите сумму пополнения KGS (СОМ):\n"
-                         "Минимум : 200\n"
+                         "Минимум : 50\n"
                          "Максимум : 100000")
     await state.set_state(DepositState.waiting_for_deposit_amount)
 
@@ -157,8 +157,8 @@ async def process_deposit_amount(message: types.Message, state: FSMContext):
 
     amount = int(amount_text)
 
-    if amount < 200 or amount > 100000:
-        await message.answer("⚠️ Сумма пополнения должна быть от 200 до 100000 KGS (СОМ). Попробуйте снова:")
+    if amount < 50 or amount > 100000:
+        await message.answer("⚠️ Сумма пополнения должна быть от 50 до 100000 KGS (СОМ). Попробуйте снова:")
         return
 
     await state.update_data(amount=amount)  
